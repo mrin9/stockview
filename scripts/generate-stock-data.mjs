@@ -35,6 +35,7 @@ async function generateData() {
         console.log('🧹 Cleared existing data');
 
         const now = new Date();
+        const oneDayAgo = subDays(now, 1);
         const twoDaysAgo = subDays(now, 2);
         const thirtyDaysAgo = subDays(now, 30);
         const twelveMonthsAgo = subMonths(now, 12);
@@ -55,7 +56,7 @@ async function generateData() {
                 currentTime = addHours(currentTime, 3);
             }
 
-            // Phase 2: 1h intervals (30 Days ago -> 7 Days ago)
+            // Phase 2: 1h intervals (30 Days ago -> 2 Days ago)
             currentTime = thirtyDaysAgo;
             while (isBefore(currentTime, twoDaysAgo)) {
                 const tick = generateOHLC(symbol, currentTime, lastClose, '1h', 1);
@@ -64,10 +65,19 @@ async function generateData() {
                 currentTime = addHours(currentTime, 1);
             }
 
-            // Phase 3: 1m intervals (7 Days ago -> Now)
+            // Phase 3: 15m intervals (2nd Day - from 2 days ago to 1 day ago)
             currentTime = twoDaysAgo;
+            while (isBefore(currentTime, oneDayAgo)) {
+                const tick = generateOHLC(symbol, currentTime, lastClose, '15m', 0.25);
+                allTicks.push(tick);
+                lastClose = tick.close;
+                currentTime = addMinutes(currentTime, 15);
+            }
+
+            // Phase 4: 1m intervals (Last 1 Day -> Now)
+            currentTime = oneDayAgo;
             while (isBefore(currentTime, now)) {
-                const tick = generateOHLC(symbol, currentTime, lastClose, '1m', 0.016); // ~1 min fraction of hour for vol scaling broadly
+                const tick = generateOHLC(symbol, currentTime, lastClose, '1m', 0.016);
                 allTicks.push(tick);
                 lastClose = tick.close;
                 currentTime = addMinutes(currentTime, 1);
