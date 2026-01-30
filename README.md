@@ -4,87 +4,59 @@ A high-performance stock analytics dashboard built with **Astro**, **Vue.js**, *
 
 ## 🚀 Prerequisites
 
-Before running the project, ensure you have:
 *   **Node.js**: v18.14.1 or higher.
 *   **MongoDB**: A running instance (Local or Atlas Cloud).
 
 ## 🛠️ Setup & Configuration
 
-1.  **Clone the repository** (if you haven't already).
+1.  **Clone the repository**.
 2.  **Install dependencies**:
     ```bash
     npm install
     ```
 3.  **Configure Environment**:
-    The project uses an `.env` file to manage database connections.
-    *   Open `.env` in the root directory.
-    *   Set `MONGODB_URI` to your specific connection string.
-    *   *Default*: Connects to the configured Cloud MongoDB instance.
-    *   *Local*: Uncomment the local URI line to switch to `localhost:27017`.
+    Edit `.env` in the root directory to set `MONGODB_URI` to your connection string.
 
-## 📜 Scripts & Usage
+## 📜 Scripts
 
-### 1. Generating Mock Data
-This script creates a robust dataset for **20 major Indian stocks** (RELIANCE, TCS, HDFCBANK, etc.) with over 30 technical indicators.
-It implements a realistic **12-month tiered timeframe strategy**:
-- **Last 7 Days**: High-resolution **1-minute** data.
-- **Previous 23 Days**: Mid-resolution **1-hour** data.
-- **Previous 11 Months**: Long-term **3-hour** data.
+| Command | Description |
+|---|---|
+| `npm run dev` | Start development server |
+| `npm run build` | Build for production |
+| `npm run gen-data` | Generate mock stock data |
+| `npm run test-db-conn` | Test MongoDB connection |
 
-**It will clear any existing data in the `stock_view` database.**
+### Generating Mock Data
 
-```bash
-npm run generate-data
-```
-*   **What it does**: Connects to the DB defined in `.env`, clears old data, generates ~30 days of 1-hour and 3 days of 1-minute OHLCV data, calculates indicators, and populates the database.
+Creates data for **20 Indian stocks** with 30+ technical indicators using a tiered timeframe:
 
-### 2. Testing Database Connection
-Verify that your application can successfully connect to the configured MongoDB instance.
+| Range | Interval |
+|---|---|
+| Last 1 Day | 1 minute |
+| 2nd Day | 15 minutes |
+| 2nd - 30th Day | 1 hour |
+| 30th Day - 1 Year | 3 hours |
 
 ```bash
-npm run test-connection
+npm run gen-data
 ```
-*   **What it does**: Loads `.env`, attempts a connection, and lists available collections. Use this to troubleshoot network or credential issues.
 
-## 💻 Running the Project
+## 💻 Running the App
 
-### Development Mode
-Start the local development server with hot-reload enabled.
-
+### Development
 ```bash
 npm run dev
 ```
-*   Access the app at `http://localhost:4321`.
+Access at `http://localhost:4321`.
 
-### Production Mode
-To run the application as it would in a production environment (using the Node.js adapter):
-
-1.  **Build the project**:
-    ```bash
-    npm run build
-    ```
-    *   This compiles the Astro/Vue app into a standalone Node.js server in the `dist/` folder.
-
-2.  **Run the server**:
-    ```bash
-    node dist/server/entry.mjs
-    ```
-    *   The app will typically start on port `4321` (or the port defined by your host).
-
-## 🧪 Testing
-
-Currently, the primary test suite focuses on infrastructure and connectivity.
-
-### Connection Tests
-To verify valid database credentials and network access:
+### Production
 ```bash
-npm run test-connection
-```
+# Build
+npm run build
 
-### Manual Verification
-1.  **Data Integrity**: Run `npm run generate-data` and verify no errors are logged.
-2.  **Search Logic**: Open the "Advanced Search" page and try complex queries (e.g., "RSI > 70 AND Close > 2000").
-3.  **Chart Rendering**: Open "Market Pulse" to verify TradingView charts load data correctly.
+# Start server
+node dist/server/entry.mjs
+```
 
 ---
 
