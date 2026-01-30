@@ -1,87 +1,114 @@
 import { MongoClient } from 'mongodb';
+import 'dotenv/config';
 import TI from 'technicalindicators';
 const {
     SMA, EMA, RSI, MACD, BollingerBands, ATR, Stochastic, ADX, CCI, WilliamsR, OBV, IchimokuCloud, PSAR, MFI, ROC, TRIX, KeltnerChannels, WMA
 } = TI;
-import { subDays, addMinutes, addHours, isBefore } from 'date-fns';
+import { subDays, subMonths, addMinutes, addHours, isBefore } from 'date-fns';
 
-const MONGO_URI = 'mongodb://localhost:27017';
-const DB_NAME = 'stock_view';
-const COLLECTION_NAME = 'stock_data';
+const MONGO_URI = process.env.MONGODB_URI;
+const DB_NAME = 'tradedb';
+const COLLECTION_NAME = 'stocks';
 
 const STOCKS = [
     'RELIANCE', 'TCS', 'HDFCBANK', 'INFY', 'ICICIBANK',
-    'BHARTIARTL', 'SBIN', 'LICI', 'HINDUNILVR', 'ITC'
+    'BHARTIARTL', 'SBIN', 'LICI', 'HINDUNILVR', 'ITC',
+    'KOTAKBANK', 'AXISBANK', 'LT', 'BAJFINANCE', 'MARUTI',
+    'HCLTECH', 'TITAN', 'SUNPHARMA', 'ASIANPAINT', 'ULTRACEMCO'
 ];
 
 async function generateData() {
+    if (!MONGO_URI) {
+        console.error('❌ MONGODB_URI is missing in .env');
+        process.exit(1);
+    }
+
     const client = new MongoClient(MONGO_URI);
     try {
         await client.connect();
-        console.log('Connected to MongoDB');
+        console.log('✅ Connected to MongoDB');
         const db = client.db(DB_NAME);
         const collection = db.collection(COLLECTION_NAME);
 
         // Clear existing data
         await collection.deleteMany({});
-        console.log('Cleared existing data');
+        console.log('🧹 Cleared existing data');
 
         const now = new Date();
-        const threeDaysAgo = subDays(now, 3);
+        const twoDaysAgo = subDays(now, 2);
         const thirtyDaysAgo = subDays(now, 30);
+        const twelveMonthsAgo = subMonths(now, 12);
 
         for (const symbol of STOCKS) {
-            console.log(`Generating data for ${symbol}...`);
+            console.log(`📈 Generating data for ${symbol}...`);
             let allTicks = [];
 
-            // Start with a random base price
+            // Random start price between 500 and 2500
             let lastClose = 500 + Math.random() * 2000;
 
-            // 1. Generate Hourly Ticks (Last 27 days, up to 3 days ago)
-            let currentTime = thirtyDaysAgo;
-            while (isBefore(currentTime, threeDaysAgo)) {
-                const tick = generateOHLC(symbol, currentTime, lastClose, '1h');
+            // Phase 1: 3h intervals (12 Months ago -> 30 Days ago)
+            let currentTime = twelveMonthsAgo;
+            while (isBefore(currentTime, thirtyDaysAgo)) {
+                const tick = generateOHLC(symbol, currentTime, lastClose, '3h', 3);
+                allTicks.push(tick);
+                lastClose = tick.close;
+                currentTime = addHours(currentTime, 3);
+            }
+
+            // Phase 2: 1h intervals (30 Days ago -> 7 Days ago)
+            currentTime = thirtyDaysAgo;
+            while (isBefore(currentTime, twoDaysAgo)) {
+                const tick = generateOHLC(symbol, currentTime, lastClose, '1h', 1);
                 allTicks.push(tick);
                 lastClose = tick.close;
                 currentTime = addHours(currentTime, 1);
             }
 
-            // 2. Generate Minute Ticks (Last 3 days up to now)
-            currentTime = threeDaysAgo;
+            // Phase 3: 1m intervals (7 Days ago -> Now)
+            currentTime = twoDaysAgo;
             while (isBefore(currentTime, now)) {
-                const tick = generateOHLC(symbol, currentTime, lastClose, '1m');
+                const tick = generateOHLC(symbol, currentTime, lastClose, '1m', 0.016); // ~1 min fraction of hour for vol scaling broadly
                 allTicks.push(tick);
                 lastClose = tick.close;
                 currentTime = addMinutes(currentTime, 1);
             }
 
-            // Calculate indicators
+            // Calculate indicators on the FULL dataset to ensure continuity
+            console.log(`   Detailed data points: ${allTicks.length}. Calculating indicators...`);
             const ticksWithIndicators = calculateIndicators(allTicks);
 
-            // Insert in chunks to avoid overwhelming MongoDB
-            const chunkSize = 1000;
+            // Insert in chunks
+            const chunkSize = 2000;
+            let insertedCount = 0;
             for (let i = 0; i < ticksWithIndicators.length; i += chunkSize) {
-                await collection.insertMany(ticksWithIndicators.slice(i, i + chunkSize));
+                const chunk = ticksWithIndicators.slice(i, i + chunkSize);
+                await collection.insertMany(chunk);
+                insertedCount += chunk.length;
             }
-            console.log(`Inserted ${ticksWithIndicators.length} ticks for ${symbol}`);
+            console.log(`   ✅ Inserted ${insertedCount} ticks for ${symbol}`);
         }
 
-        console.log('Data generation complete!');
+        console.log('🎉 Data generation complete!');
     } catch (error) {
-        console.error('Error:', error);
+        console.error('❌ Error:', error);
     } finally {
         await client.close();
     }
 }
 
-function generateOHLC(symbol, time, lastClose, resolution) {
-    const volatility = resolution === '1h' ? 0.01 : 0.002;
+function generateOHLC(symbol, time, lastClose, resolution, timeScaleHours) {
+    // scale volatility based on time interval duration to keep price movements realistic
+    // 1h vol ~ 1%, 3h vol ~ 1.7%, 1m vol ~ 0.1%
+    let volatility = 0.002; // default 1m
+    if (resolution === '1h') volatility = 0.01;
+    if (resolution === '3h') volatility = 0.015;
+
     const change = lastClose * volatility * (Math.random() - 0.5);
     const open = lastClose;
     const close = open + change;
     const high = Math.max(open, close) + (Math.random() * (open * volatility * 0.5));
     const low = Math.min(open, close) - (Math.random() * (open * volatility * 0.5));
-    const volume = Math.floor(Math.random() * 1000000);
+    const volume = Math.floor(Math.random() * (100000 + (resolution === '1m' ? 0 : 500000)));
 
     return {
         symbol,

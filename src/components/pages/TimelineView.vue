@@ -2,9 +2,22 @@
   <div class="flex flex-col gap-6 p-6">
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-bold text-white">Stock Timeline</h2>
-      <div class="flex gap-4">
+      <div class="flex gap-4 items-center">
         <Select v-model="selectedStock" :options="symbols" placeholder="Select Stock" class="w-64" @change="loadData" />
-        <SelectButton v-model="selectedRes" :options="['1m', '1h']" @change="loadData" />
+        
+        <!-- Timeframe Buttons -->
+        <div class="flex bg-slate-800 rounded p-1 gap-1">
+            <Button 
+                v-for="tf in timeframes" 
+                :key="tf.label" 
+                :label="tf.label" 
+                size="small"
+                @click="setTimeframe(tf)"
+                :severity="selectedTF.label === tf.label ? 'primary' : 'secondary'"
+                :text="selectedTF.label !== tf.label"
+            />
+        </div>
+
         <Button icon="pi pi-refresh" @click="loadData" :loading="loading" severity="secondary" />
       </div>
     </div>
@@ -45,9 +58,19 @@ const apexchart = VueApexCharts;
 
 const symbols = ref([]);
 const selectedStock = ref('RELIANCE');
-const selectedRes = ref('1m');
 const loading = ref(false);
 const ticks = ref([]);
+
+const timeframes = [
+    { label: '1H', value: '1h' },
+    { label: '1D', value: '1d' },
+    { label: '7D', value: '7d' },
+    { label: '1M', value: '1M' },
+    { label: '5M', value: '5M' },
+    { label: '1Y', value: '1y' }
+];
+
+const selectedTF = ref(timeframes[0]); // Default 1H
 
 const series = computed(() => {
   return [{
@@ -70,7 +93,7 @@ const chartOptions = computed(() => ({
     }
   },
   title: {
-    text: `${selectedStock.value} - ${selectedRes.value} Timeline`,
+    text: `${selectedStock.value} - ${selectedTF.value.label} Timeline`,
     align: 'left',
     style: { color: '#fff' }
   },
@@ -115,11 +138,36 @@ const loadSymbols = async () => {
   symbols.value = await res.json();
 };
 
+const setTimeframe = (tf) => {
+    selectedTF.value = tf;
+    loadData();
+};
+
 const loadData = async () => {
   loading.value = true;
-  const res = await fetch(`/api/stocks.json?symbol=${selectedStock.value}&resolution=${selectedRes.value}&limit=100`);
-  ticks.value = await res.json();
-  loading.value = false;
+  
+  // Calculate From Timestamp
+  const now = new Date();
+  let fromTime = new Date();
+  
+  switch(selectedTF.value.value) {
+      case '1h': fromTime.setHours(now.getHours() - 1); break;
+      case '1d': fromTime.setDate(now.getDate() - 1); break;
+      case '7d': fromTime.setDate(now.getDate() - 7); break;
+      case '1M': fromTime.setMonth(now.getMonth() - 1); break;
+      case '5M': fromTime.setMonth(now.getMonth() - 5); break;
+      case '1y': fromTime.setFullYear(now.getFullYear() - 1); break;
+      default: fromTime.setHours(now.getHours() - 1);
+  }
+  
+  try {
+    const res = await fetch(`/api/stocks.json?symbol=${selectedStock.value}&from=${fromTime.getTime()}`);
+    ticks.value = await res.json();
+  } catch (e) {
+      console.error(e);
+  } finally {
+      loading.value = false;
+  }
 };
 
 onMounted(() => {

@@ -7,7 +7,20 @@
       </div>
       <div class="flex gap-3 items-center">
         <Select v-model="selectedSymbol" :options="symbols" placeholder="Select Stock" class="w-48" @change="loadData" />
-        <SelectButton v-model="selectedRes" :options="['1m', '1h']" @change="loadData" />
+        
+        <!-- Timeframe Buttons -->
+        <div class="flex bg-slate-800 rounded p-1 gap-1">
+            <Button 
+                v-for="tf in timeframes" 
+                :key="tf.label" 
+                :label="tf.label" 
+                size="small"
+                @click="setTimeframe(tf)"
+                :severity="selectedTF.label === tf.label ? 'primary' : 'secondary'"
+                :text="selectedTF.label !== tf.label"
+            />
+        </div>
+
         <Button icon="pi pi-refresh" @click="loadData" :loading="loading" severity="secondary" rounded />
       </div>
     </div>
@@ -54,9 +67,19 @@ import SelectButton from 'primevue/selectbutton';
 const chartContainer = ref(null);
 const indicatorContainer = ref(null);
 const selectedSymbol = ref('RELIANCE');
-const selectedRes = ref('1m');
 const loading = ref(false);
 const symbols = ref([]);
+
+const timeframes = [
+    { label: '1H', value: '1h' },
+    { label: '1D', value: '1d' },
+    { label: '7D', value: '7d' },
+    { label: '1M', value: '1M' },
+    { label: '5M', value: '5M' },
+    { label: '1Y', value: '1y' }
+];
+
+const selectedTF = ref(timeframes[0]); // Default 1H
 
 const indicators = ref([
   { id: 'sma20', label: 'SMA 20', active: false, color: '#3b82f6', type: 'overlay' },
@@ -151,11 +174,30 @@ const initCharts = () => {
     }
 };
 
+const setTimeframe = (tf) => {
+    selectedTF.value = tf;
+    loadData();
+};
+
 const loadData = async () => {
   if (loading.value || !candlestickSeries) return;
   loading.value = true;
   try {
-    const res = await fetch(`/api/stocks.json?symbol=${selectedSymbol.value}&resolution=${selectedRes.value}&limit=200`);
+    // Calculate From Timestamp based on TF
+    const now = new Date();
+    let fromTime = new Date();
+    
+    switch(selectedTF.value.value) {
+        case '1h': fromTime.setHours(now.getHours() - 1); break;
+        case '1d': fromTime.setDate(now.getDate() - 1); break;
+        case '7d': fromTime.setDate(now.getDate() - 7); break;
+        case '1M': fromTime.setMonth(now.getMonth() - 1); break;
+        case '5M': fromTime.setMonth(now.getMonth() - 5); break;
+        case '1y': fromTime.setFullYear(now.getFullYear() - 1); break;
+        default: fromTime.setHours(now.getHours() - 1);
+    }
+
+    const res = await fetch(`/api/stocks.json?symbol=${selectedSymbol.value}&from=${fromTime.getTime()}`);
     const rawData = await res.json();
     
     if (!rawData || !Array.isArray(rawData)) {
@@ -165,6 +207,7 @@ const loadData = async () => {
 
     const data = rawData.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     
+    // Process unique times and format for Lightweight Charts (seconds timestamp)
     const uniqueTimes = new Set();
     const cdata = [];
     
@@ -195,10 +238,14 @@ const loadData = async () => {
     paneSeries = {};
 
     // Helper to map data
-    const mapData = (key) => data.filter(d => d[key] !== undefined).map(d => ({
-        time: Math.floor(new Date(d.timestamp).getTime() / 1000),
-        value: d[key]
-    }));
+    const mapData = (key) => {
+        return data
+            .filter(d => d[key] !== undefined)
+            .map(d => ({
+                time: Math.floor(new Date(d.timestamp).getTime() / 1000),
+                value: d[key]
+            }));
+    };
 
     // Render Active Indicators
     for (const ind of indicators.value) {
@@ -314,7 +361,9 @@ const fetchSymbols = async () => {
 const handleResize = () => {
     if (chart && chartContainer.value) {
         chart.applyOptions({ width: chartContainer.value.clientWidth, height: chartContainer.value.clientHeight });
-        rsiChart.applyOptions({ width: rsiContainer.value.clientWidth, height: rsiContainer.value.clientHeight });
+        if (indicatorChart && indicatorContainer.value) {
+            indicatorChart.applyOptions({ width: indicatorContainer.value.clientWidth, height: indicatorContainer.value.clientHeight });
+        }
     }
 };
 
@@ -335,7 +384,7 @@ onMounted(async () => {
 onUnmounted(() => {
     window.removeEventListener('resize', handleResize);
     if (chart) chart.remove();
-    if (rsiChart) rsiChart.remove();
+    if (indicatorChart) indicatorChart.remove();
 });
 </script>
 

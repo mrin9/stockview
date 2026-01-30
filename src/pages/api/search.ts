@@ -1,8 +1,8 @@
 import { MongoClient } from 'mongodb';
 
-const MONGO_URI = 'mongodb://localhost:27017';
-const DB_NAME = 'stock_view';
-const COLLECTION_NAME = 'stock_data';
+const MONGO_URI = import.meta.env.MONGODB_URI || 'mongodb://localhost:27017';
+const DB_NAME = 'tradedb';
+const COLLECTION_NAME = 'stocks';
 
 export const POST = async ({ request }: { request: Request }) => {
     try {
