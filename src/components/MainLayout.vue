@@ -1,19 +1,19 @@
 <template>
-  <div class="avalon-layout min-h-screen bg-slate-950 text-slate-200 font-sans flex overflow-hidden">
+  <div class="min-h-screen bg-slate-950 text-slate-200 font-sans flex overflow-hidden">
     <!-- Sidebar -->
-    <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col z-20">
-      <div class="p-6 flex items-center gap-3">
-        <div class="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-white font-bold">A</div>
-        <h1 class="text-xl font-bold tracking-tight text-white uppercase italic">Avalon</h1>
+    <aside class="w-56 bg-slate-900 border-r border-slate-800 flex flex-col z-20">
+      <div class="p-5 flex items-center gap-2.5">
+        <div class="w-8 h-8 bg-orange-500 rounded-sm flex items-center justify-center text-white font-bold">SV</div>
+        <h1 class="text-lg font-bold tracking-tight text-white">StockView</h1>
       </div>
 
-      <nav class="flex-1 px-4 py-4 space-y-1">
-        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 px-3">Dashboards</div>
+      <nav class="flex-1 px-3 py-3 space-y-0.5">
+        <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 px-2.5">Dashboards</div>
         <a 
           v-for="item in menuItems" 
           :key="item.id"
           @click="changeView(item.id)"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
+          class="flex items-center gap-2.5 px-2.5 py-2 rounded-sm cursor-pointer transition-all duration-200"
           :class="isActive(item.id) ? 'bg-orange-500 text-white shadow-lg shadow-orange-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
         >
           <i :class="[item.icon, 'text-lg']"></i>
@@ -21,10 +21,10 @@
         </a>
       </nav>
 
-      <div class="p-4 mt-auto">
-        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-          <div class="text-xs text-orange-400 font-bold mb-1">PRO PLAN</div>
-          <div class="text-sm text-slate-300">Upgrade for more indicators</div>
+      <div class="p-3 mt-auto">
+        <div class="bg-slate-800 p-3 rounded-sm border border-slate-700">
+          <div class="text-xs text-orange-400 font-bold mb-0.5">PRO PLAN</div>
+          <div class="text-xs text-slate-300">Upgrade for more indicators</div>
         </div>
       </div>
     </aside>
@@ -32,11 +32,11 @@
     <!-- Main Content Area -->
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
       <!-- Header -->
-      <header class="h-16 bg-slate-900/50 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-6 z-10">
-        <div class="flex items-center gap-4 flex-1">
+      <header class="h-14 bg-slate-900/50 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-5 z-10">
+        <div class="flex items-center gap-3.5 flex-1">
           <Button icon="pi pi-bars" text severity="secondary" class="lg:hidden" />
-          <div class="relative w-full max-w-md group">
-             <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10"></i>
+           <div class="relative w-full max-w-md group">
+             <i class="pi pi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 z-10"></i>
              <AutoComplete 
                 v-model="selectedSearchItem" 
                 :suggestions="filteredSymbols" 
@@ -44,7 +44,7 @@
                 placeholder="Search stocks..."
                 @item-select="onStockSelect"
                 class="w-full custom-autocomplete"
-                inputClass="w-full !bg-slate-800 !border-none !rounded-lg !pl-10 !pr-4 !py-2 !text-sm !text-slate-200 focus:!ring-1 focus:!ring-orange-500 !shadow-none"
+                inputClass="w-full !bg-slate-800 !border-none !rounded-sm !pl-9 !pr-3.5 !py-1.5 !text-sm !text-slate-200 focus:!ring-1 focus:!ring-orange-500 !shadow-none"
              >
                 <template #option="slotProps">
                     <div class="flex items-center gap-2">
@@ -55,7 +55,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3.5">
           <Button icon="pi pi-bell" text severity="secondary" rounded />
           <Button icon="pi pi-cog" text severity="secondary" rounded />
           <div class="flex items-center gap-3 pl-4 border-l border-slate-800">
@@ -100,6 +100,7 @@ import TimelineView from './pages/TimelineView.vue';
 import FilterView from './pages/FilterView.vue';
 import MarketPulseView from './pages/MarketPulseView.vue';
 import StockDetailView from './pages/StockDetailView.vue';
+
 
 const currentView = ref('timeline');
 const selectedSymbol = ref(null);

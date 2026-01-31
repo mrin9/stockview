@@ -1,13 +1,13 @@
 <template>
-  <div class="p-6 space-y-6 animate-fade-in" v-if="stockData">
+    <div class="p-5 space-y-5 animate-fade-in" v-if="stockData">
     <!-- Header Section -->
     <div class="flex items-start justify-between">
       <div>
-        <div class="flex items-center gap-3 mb-1">
-          <h1 class="text-3xl font-bold text-white tracking-tight">{{ stockData.profile.symbol }}</h1>
-          <span class="px-2 py-0.5 rounded text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">NSE</span>
+        <div class="flex items-center gap-2.5 mb-0.5">
+          <h1 class="text-2xl font-bold text-white tracking-tight">{{ stockData.profile.symbol }}</h1>
+          <span class="px-1.5 py-0.5 rounded text-xs font-bold bg-slate-800 text-slate-400 border border-slate-700">NSE</span>
         </div>
-        <p class="text-slate-400 text-sm max-w-2xl">{{ stockData.profile.description }}</p>
+        <p class="text-slate-400 text-xs max-w-2xl">{{ stockData.profile.description }}</p>
         <a :href="stockData.profile.website" target="_blank" class="text-orange-500 text-xs hover:underline mt-1 block">Visit Website</a>
       </div>
       <div class="text-right">
@@ -23,12 +23,12 @@
     </div>
 
     <!-- Top Grid: Essentials & Analysis -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
       
       <!-- Essentials Card -->
-      <div class="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
-        <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2">Company Essentials</h3>
-        <div class="grid grid-cols-2 gap-y-4 gap-x-2">
+    <div class="lg:col-span-1 bg-slate-900 border border-slate-800 rounded-sm p-4.5 shadow-sm">
+        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3.5 border-b border-slate-800 pb-1.5">Company Essentials</h3>
+        <div class="grid grid-cols-2 gap-y-3.5 gap-x-1.5">
             <div class="flex flex-col">
                 <span class="text-xs text-slate-500">Market Cap</span>
                 <span class="font-medium text-slate-200">{{ stockData.fundamentals.marketCap }} Cr</span>
@@ -65,7 +65,7 @@
       </div>
 
        <!-- Chart Section using ChartJS -->
-       <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-0 overflow-hidden flex flex-col shadow-sm">
+       <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-sm p-0 overflow-hidden flex flex-col shadow-sm">
          <div class="p-4 border-b border-slate-800 flex justify-between items-center">
              <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Price & Volume (1D)</h3>
              <div class="flex gap-2">
@@ -80,13 +80,13 @@
 
     <!-- PE & PB Charts Row (Proxy Charts for now) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-sm p-5 shadow-sm">
              <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">P/E Trends (5Y Estimate)</h3>
              <div class="h-64 relative">
                  <Line v-if="peChartData" :data="peChartData" :options="peChartOptions" />
              </div>
         </div>
-         <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+         <div class="bg-slate-900 border border-slate-800 rounded-sm p-5 shadow-sm">
              <h3 class="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-4">P/B Trends (5Y Estimate)</h3>
              <div class="h-64 relative">
                  <Line v-if="pbChartData" :data="pbChartData" :options="peChartOptions" />
@@ -97,7 +97,7 @@
     <!-- Pros & Cons -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
          <!-- Pros -->
-         <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+         <div class="bg-slate-900 border border-slate-800 rounded-sm p-5 shadow-sm">
              <h3 class="text-sm font-semibold text-green-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2 flex items-center gap-2">
                  <i class="pi pi-thumbs-up"></i> Pros
              </h3>
@@ -108,7 +108,7 @@
              </ul>
          </div>
          <!-- Cons -->
-         <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+         <div class="bg-slate-900 border border-slate-800 rounded-sm p-5 shadow-sm">
              <h3 class="text-sm font-semibold text-red-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-2 flex items-center gap-2">
                  <i class="pi pi-thumbs-down"></i> Cons
              </h3>
@@ -121,7 +121,7 @@
     </div>
 
     <!-- Peer Comparison -->
-    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+    <div class="bg-slate-900 border border-slate-800 rounded-sm p-6 shadow-sm">
          <h3 class="text-lg font-bold text-white mb-4">Peer Comparison</h3>
          <DataTable :value="stockData.peers" tableStyle="min-width: 50rem">
             <Column field="symbol" header="Name">
@@ -140,7 +140,7 @@
     </div>
 
     <!-- Financial Tables Tab View -->
-    <div class="bg-slate-900 border border-slate-800 rounded-xl shadow-sm overflow-hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-sm shadow-sm overflow-hidden">
         <div class="flex border-b border-slate-800">
              <button 
                 v-for="tab in tabs" 
@@ -237,7 +237,7 @@
     </div>
 
     <!-- Shareholding Pattern -->
-    <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
+    <div class="bg-slate-900 border border-slate-800 rounded-sm p-6 shadow-sm">
          <h3 class="text-lg font-bold text-white mb-4">Shareholding Pattern</h3>
          <DataTable :value="stockData.shareholdings" stripedRows class="text-sm">
              <Column field="period" header="Period"></Column>
@@ -397,7 +397,7 @@ async function fetchData(sym) {
     loading.value = true;
     stockData.value = null;
     try {
-        const res = await fetch(`/api/stock/${sym}.json`);
+        const res = await fetch(`/api/stock.json?symbol=${sym}`);
         if (!res.ok) throw new Error('Failed to fetch');
         const data = await res.json();
         stockData.value = data;

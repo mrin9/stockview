@@ -1,12 +1,12 @@
 <template>
-  <div class="flex flex-col gap-6 p-6">
+  <div class="flex flex-col gap-5 p-5">
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-bold text-white">Stock Timeline</h2>
-      <div class="flex gap-4 items-center">
-        <Select v-model="selectedStock" :options="symbols" placeholder="Select Stock" class="w-64" @change="loadData" />
+      <div class="flex gap-3.5 items-center">
+        <Select v-model="selectedStock" :options="symbols" placeholder="Select Stock" class="w-64" size="small" @change="loadData" />
         
         <!-- Timeframe Buttons -->
-        <div class="flex bg-slate-800 rounded p-1 gap-1">
+        <div class="flex bg-slate-800 rounded p-0.5 gap-0.5">
             <Button 
                 v-for="tf in timeframes" 
                 :key="tf.label" 
@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 gap-6">
+    <div class="grid grid-cols-1 gap-5">
       <Card class="bg-slate-900 border-slate-800 shadow-xl overflow-hidden">
         <template #content>
           <div id="chart-timeline" class="h-[600px] w-full">
@@ -36,8 +36,8 @@
         </template>
       </Card>
 
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div v-for="stat in stats" :key="stat.label" class="p-4 bg-slate-800 rounded-lg border border-slate-700 shadow-lg">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3.5">
+        <div v-for="stat in stats" :key="stat.label" class="p-3.5 bg-slate-800 rounded-lg border border-slate-700 shadow-lg">
           <div class="text-slate-400 text-sm mb-1">{{ stat.label }}</div>
           <div class="text-xl font-mono text-white">{{ stat.value }}</div>
         </div>

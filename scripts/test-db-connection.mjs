@@ -18,10 +18,13 @@ async function testConnection() {
         await client.connect();
         console.log('✅ Success: Connected to MongoDB!');
 
-        const db = client.db('stock_view');
+        const db = client.db('tradedb');
         // Optional: List collections to verify read access
         const collections = await db.listCollections().toArray();
         console.log(`📚 Accessible Collections: ${collections.map(c => c.name).join(', ') || 'None'}`);
+
+        const count = await db.collection('stocks').countDocuments();
+        console.log(`📊 Documents in 'stocks' collection: ${count}`);
 
     } catch (error) {
         console.error('❌ Connection Failed:', error.message);

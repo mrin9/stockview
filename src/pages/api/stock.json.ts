@@ -1,21 +1,18 @@
-import { MongoClient } from 'mongodb';
+import clientPromise from '../../lib/mongodb';
 
-const MONGO_URI = import.meta.env.MONGODB_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'tradedb';
 
 export const prerender = false;
 
-export async function GET({ params }) {
-    const { symbol } = params;
+export async function GET({ url }: { url: URL }) {
+    const symbol = url.searchParams.get('symbol');
 
     if (!symbol) {
         return new Response(JSON.stringify({ error: 'Symbol is required' }), { status: 400 });
     }
 
-    const client = new MongoClient(MONGO_URI);
-
     try {
-        await client.connect();
+        const client = await clientPromise;
         const db = client.db(DB_NAME);
         const upperSymbol = symbol.toUpperCase();
 
@@ -64,7 +61,5 @@ export async function GET({ params }) {
     } catch (error) {
         console.error('Database Error:', error);
         return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
-    } finally {
-        await client.close();
     }
 }

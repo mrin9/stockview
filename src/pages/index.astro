@@ -1,19 +1,22 @@
 ---
-import MainLayout from '../components/MainLayout.vue';
-import 'primeicons/primeicons.css';
-import '../styles/global.css';
+import MainLayout from "../components/MainLayout.vue";
+import "primeicons/primeicons.css";
+import "../styles/global.css";
 ---
 
-<html lang="en">
+<html lang="en" class="p-dark">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
 		<title>Avalon - Stock Analytics Dashboard</title>
-		<link rel="preconnect" href="https://fonts.googleapis.com">
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
 	</head>
 	<body class="bg-slate-950 font-['Inter',_sans-serif]">
 		<MainLayout client:only="vue" />
@@ -21,7 +24,7 @@ import '../styles/global.css';
 </html>
 
 <style is:global>
-  body {
-    margin: 0;
-  }
+	body {
+		margin: 0;
+	}
 </style>

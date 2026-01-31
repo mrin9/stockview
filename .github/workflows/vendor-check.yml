@@ -1,0 +1,33 @@
+name: Vendor CSS check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-vendor:
+    name: Fail build when vendored PrimeUIX is missing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Vendor PrimeUIX (if package present)
+        run: npm run vendor:primeuix || true
+
+      - name: Check vendored PrimeUIX CSS
+        run: npm run check:vendor
+
+      - name: Build (only if vendor check passes)
+        run: npm run build

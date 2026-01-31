@@ -1,16 +1,16 @@
 <template>
-  <div class="flex flex-col gap-6 p-6">
+  <div class="flex flex-col gap-4 p-4">
     <Toast />
     <div class="flex justify-between items-center text-white">
-      <h2 class="text-2xl font-bold uppercase tracking-tight">Advanced Stock Filter</h2>
+      <h2 class="text-lg font-bold uppercase tracking-tight">Advanced Stock Filter</h2>
       <p class="text-slate-400 text-sm">Build complex queries with multi-step logic</p>
     </div>
 
     <Card class="bg-slate-900 border-slate-800 shadow-xl">
       <template #content>
-        <div class="flex flex-col gap-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div v-for="(item, index) in criteria" :key="index" class="flex flex-col bg-slate-800/40 rounded-xl border border-slate-700/50 hover:border-orange-500/30 transition-colors relative group">
+        <div class="flex flex-col gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div v-for="(item, index) in criteria" :key="index" class="flex flex-col bg-slate-800/40 rounded-sm border border-slate-700/50 hover:border-orange-500/30 transition-colors relative group">
               
               <!-- Remove Button (Top Right) -->
               <Button icon="pi pi-times" 
@@ -22,25 +22,25 @@
                       class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       v-if="criteria.length > 1" />
 
-              <div class="p-4 flex flex-col gap-3">
+              <div class="p-3 flex flex-col gap-2">
                  <!-- Inputs Row -->
-                 <div class="flex gap-2 items-center pr-6">
-                   <Select v-model="item.field" :options="fieldOptions" optionLabel="label" optionValue="value" placeholder="Field" class="flex-1 min-w-[140px]" @keyup.enter="search" />
-                   <Select v-model="item.operator" :options="['==', '>', '<', '>=', '<=', 'contains']" placeholder="Op" class="w-24" @keyup.enter="search" />
-                   <InputText v-model="item.value" placeholder="Value" class="flex-1 min-w-[100px]" @keyup.enter="search" />
+                 <div class="flex gap-1 items-center pr-4">
+                   <Select v-model="item.field" :options="fieldOptions" optionLabel="label" optionValue="value" placeholder="Field" @keyup.enter="search" size="small"/>
+                   <Select v-model="item.operator" :options="['==', '>', '<', '>=', '<=', 'contains']" placeholder="Op"  @keyup.enter="search" size="small"/>
+                   <InputText v-model="item.value" placeholder="Value" class="flex-1 min-w-[90px]" @keyup.enter="search" size="small"/>
                  </div>
 
                  <!-- Action Row (SplitButton or Joiner Label) -->
-                 <div class="flex justify-end items-center h-8">
+                 <div class="flex justify-end items-center h-7">
                     <!-- If this is the LAST item, show SplitButton to ADD next -->
-                    <div v-if="index === criteria.length - 1" class="flex gap-2">
+                    <div v-if="index === criteria.length - 1" class="flex gap-1.5">
                         <Button label="Clear" icon="pi pi-filter-slash" @click="clear" severity="secondary" text size="small" />
                         <Button label="Search" icon="pi pi-search" @click="search" :loading="loading" size="small" raised />
                         <SplitButton label="AND" :model="getSplitItems(index)" @click="addCriteria('AND')" size="small" severity="secondary" outlined class="ml-2" />
                     </div>
                     
                     <!-- If NOT the last item, show the joiner (AND/OR) that connects to the NEXT item -->
-                    <div v-else class="flex items-center gap-2">
+                    <div v-else class="flex items-center gap-1.5">
                          <span class="text-xs text-slate-500 font-bold uppercase tracking-widest">{{ item.joiner }}</span>
                          <div class="h-[1px] w-12 bg-slate-700"></div>
                     </div>
@@ -55,7 +55,7 @@
     <Card v-if="results.length > 0" class="bg-slate-900 border-slate-800 shadow-xl overflow-hidden">
       <template #title><span class="text-white">Results ({{ results.length }})</span></template>
       <template #content>
-        <DataTable :value="results" paginator :rows="100" scrollable scrollHeight="600px" tableStyle="min-width: 50rem" class="p-datatable-sm">
+        <DataTable :value="results" paginator :rows="100" scrollable scrollHeight="600px" tableStyle="min-width: 50rem; font-size: 0.85rem;" class="p-datatable-sm">
           <Column field="symbol" header="Symbol" sortable frozen class="font-bold text-orange-400"></Column>
           <Column field="timestamp" header="Time" sortable>
             <template #body="slotProps">
@@ -77,7 +77,7 @@
       </template>
     </Card>
     
-    <div v-else-if="!loading && searched" class="text-center p-12 flex flex-col items-center justify-center bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
+    <div v-else-if="!loading && searched" class="text-center p-12 flex flex-col items-center justify-center bg-slate-900/50 rounded-sm border border-dashed border-slate-800">
       <div class="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4">
         <i class="pi pi-search text-2xl text-slate-500"></i>
       </div>
