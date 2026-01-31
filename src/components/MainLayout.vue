@@ -12,9 +12,9 @@
         <a 
           v-for="item in menuItems" 
           :key="item.id"
-          @click="currentView = item.id"
+          @click="changeView(item.id)"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-200"
-          :class="currentView === item.id ? 'bg-orange-500 text-white shadow-lg shadow-orange-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
+          :class="isActive(item.id) ? 'bg-orange-500 text-white shadow-lg shadow-orange-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'"
         >
           <i :class="[item.icon, 'text-lg']"></i>
           <span class="font-medium">{{ item.label }}</span>
@@ -35,13 +35,23 @@
       <header class="h-16 bg-slate-900/50 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-6 z-10">
         <div class="flex items-center gap-4 flex-1">
           <Button icon="pi pi-bars" text severity="secondary" class="lg:hidden" />
-          <div class="relative w-full max-w-md">
-            <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
-            <input 
-              type="text" 
-              placeholder="Search stocks..." 
-              class="w-full bg-slate-800 border-none rounded-lg pl-10 pr-4 py-2 text-sm text-slate-200 focus:ring-1 focus:ring-orange-500 outline-none transition-all"
-            />
+          <div class="relative w-full max-w-md group">
+             <i class="pi pi-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10"></i>
+             <AutoComplete 
+                v-model="selectedSearchItem" 
+                :suggestions="filteredSymbols" 
+                @complete="searchSymbols" 
+                placeholder="Search stocks..."
+                @item-select="onStockSelect"
+                class="w-full custom-autocomplete"
+                inputClass="w-full !bg-slate-800 !border-none !rounded-lg !pl-10 !pr-4 !py-2 !text-sm !text-slate-200 focus:!ring-1 focus:!ring-orange-500 !shadow-none"
+             >
+                <template #option="slotProps">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-200">{{ slotProps.option }}</span>
+                    </div>
+                </template>
+             </AutoComplete>
           </div>
         </div>
 
@@ -51,7 +61,7 @@
           <div class="flex items-center gap-3 pl-4 border-l border-slate-800">
             <div class="text-right">
               <div class="text-xs font-bold text-white leading-tight">M. Rin</div>
-              <div class="text-[10px] text-slate-500 uppercase font-bold">Analyst</div>
+              <div class="text-xs text-slate-500 uppercase font-bold">Analyst</div>
             </div>
             <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 p-[1px]">
                <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
@@ -63,9 +73,9 @@
       </header>
 
       <!-- Main Body -->
-      <main class="flex-1 overflow-y-auto bg-slate-950 custom-scrollbar">
+      <main class="flex-1 overflow-y-auto bg-slate-950 custom-scrollbar relative">
         <transition name="fade" mode="out-in">
-          <component :is="activeComponent" />
+          <component :is="activeComponent" v-bind="componentProps" />
         </transition>
       </main>
 
@@ -83,13 +93,19 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import Button from 'primevue/button';
+import AutoComplete from 'primevue/autocomplete';
 import TimelineView from './pages/TimelineView.vue';
 import FilterView from './pages/FilterView.vue';
 import MarketPulseView from './pages/MarketPulseView.vue';
+import StockDetailView from './pages/StockDetailView.vue';
 
 const currentView = ref('timeline');
+const selectedSymbol = ref(null);
+const selectedSearchItem = ref(null);
+const allSymbols = ref([]);
+const filteredSymbols = ref([]);
 
 const menuItems = [
   { id: 'timeline', label: 'Timeline View', icon: 'pi pi-chart-line' },
@@ -98,13 +114,62 @@ const menuItems = [
   { id: 'tasks', label: 'Analysis Tasks', icon: 'pi pi-list' }
 ];
 
+onMounted(async () => {
+    try {
+        const res = await fetch('/api/symbols.json');
+        if (res.ok) {
+            allSymbols.value = await res.json();
+        }
+    } catch (e) {
+        console.error('Failed to load symbols for search', e);
+    }
+});
+
+function searchSymbols(event) {
+    if (!event.query.trim()) {
+        filteredSymbols.value = [];
+        return;
+    }
+    const query = event.query.toUpperCase();
+    filteredSymbols.value = allSymbols.value.filter(s => s.includes(query)).slice(0, 10);
+}
+
+function onStockSelect(event) {
+    const symbol = event.value;
+    if (symbol) {
+        selectedSymbol.value = symbol;
+        currentView.value = 'stock-detail';
+        selectedSearchItem.value = ''; // Clear search
+    }
+}
+
+function changeView(id) {
+    currentView.value = id;
+    if (id !== 'stock-detail') {
+        selectedSymbol.value = null; 
+    }
+}
+
+function isActive(id) {
+    if (id === 'stock-detail') return false; 
+    return currentView.value === id;
+}
+
 const activeComponent = computed(() => {
   switch (currentView.value) {
     case 'timeline': return TimelineView;
     case 'search': return FilterView;
     case 'settings': return MarketPulseView;
+    case 'stock-detail': return StockDetailView;
     default: return TimelineView;
   }
+});
+
+const componentProps = computed(() => {
+    if (currentView.value === 'stock-detail') {
+        return { symbol: selectedSymbol.value };
+    }
+    return {};
 });
 </script>
 
@@ -150,14 +215,29 @@ const activeComponent = computed(() => {
   --p-datatable-row-hover-background: #1e293b !important;
   --p-datatable-text-color: #cbd5e1 !important;
 }
-
-.p-select, .p-inputtext, .p-selectbutton {
-  background: #1e293b !important;
-  border-color: #334155 !important;
-  color: #f1f5f9 !important;
+.p-datatable .p-column-header-content {
+    color: #94a3b8 !important;   
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.p-datatable .p-datatable-tbody > tr > td {
+    border-color: #1e293b !important;
 }
 
-.p-select:hover, .p-inputtext:hover {
-  border-color: #f97316 !important; /* orange-500 */
+.p-autocomplete {
+    width: 100%;
+}
+.p-autocomplete-panel {
+    background: #1e293b !important;
+    border: 1px solid #334155 !important;
+    color: #e2e8f0 !important;
+}
+.p-autocomplete-option {
+    color: #e2e8f0 !important;
+}
+.p-autocomplete-option:hover, .p-autocomplete-option[data-p-focused="true"] {
+    background: #334155 !important;
+    color: #f8fafc !important;
 }
 </style>
