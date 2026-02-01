@@ -62,6 +62,7 @@ const AvalonPreset = definePreset(Nora, {
 });
 
 import ToastService from 'primevue/toastservice';
+import ConfirmationService from 'primevue/confirmationservice';
 
 export default (app: any) => {
     app.use(PrimeVue, {
@@ -73,4 +74,5 @@ export default (app: any) => {
         }
     });
     app.use(ToastService);
+    app.use(ConfirmationService);
 };

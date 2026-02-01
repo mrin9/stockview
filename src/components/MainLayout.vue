@@ -7,7 +7,7 @@
         <h1 class="text-lg font-bold tracking-tight text-white">StockView</h1>
       </div>
 
-      <nav class="flex-1 px-3 py-3 space-y-0.5">
+      <nav class="flex-1 px-5 py-5 space-y-1.5">
         <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5 px-2.5">Dashboards</div>
         <a 
           v-for="item in menuItems" 
@@ -21,8 +21,8 @@
         </a>
       </nav>
 
-      <div class="p-3 mt-auto">
-        <div class="bg-slate-800 p-3 rounded-sm border border-slate-700">
+      <div class="p-5 mt-auto">
+        <div class="bg-slate-800 p-5 rounded-sm border border-slate-700">
           <div class="text-xs text-orange-400 font-bold mb-0.5">PRO PLAN</div>
           <div class="text-xs text-slate-300">Upgrade for more indicators</div>
         </div>
@@ -33,7 +33,7 @@
     <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
       <!-- Header -->
       <header class="h-14 bg-slate-900/50 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-5 z-10">
-        <div class="flex items-center gap-3.5 flex-1">
+        <div class="flex items-center gap-10 flex-1">
           <Button icon="pi pi-bars" text severity="secondary" class="lg:hidden" />
            <div class="relative w-full max-w-md group">
              <i class="pi pi-search absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 z-10"></i>
@@ -55,7 +55,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-3.5">
+        <div class="flex items-center gap-10">
           <Button icon="pi pi-bell" text severity="secondary" rounded />
           <Button icon="pi pi-cog" text severity="secondary" rounded />
           <div class="flex items-center gap-3 pl-4 border-l border-slate-800">
@@ -81,7 +81,7 @@
 
       <!-- Footer -->
       <footer class="h-12 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-6 text-xs text-slate-500">
-        <div>© 2026 Avalon Stock Analytics. NSE Data.</div>
+        <div>© 2026 StockView. NSE Data.</div>
         <div class="flex gap-4">
           <a href="#" class="hover:text-slate-300">Terms</a>
           <a href="#" class="hover:text-slate-300">Privacy</a>
@@ -100,6 +100,8 @@ import TimelineView from './pages/TimelineView.vue';
 import FilterView from './pages/FilterView.vue';
 import MarketPulseView from './pages/MarketPulseView.vue';
 import StockDetailView from './pages/StockDetailView.vue';
+import TradeTriggersView from './pages/TradeTriggersView.vue';
+
 
 
 const currentView = ref('timeline');
@@ -112,7 +114,9 @@ const menuItems = [
   { id: 'timeline', label: 'Timeline View', icon: 'pi pi-chart-line' },
   { id: 'search', label: 'Advanced Search', icon: 'pi pi-filter' },
   { id: 'settings', label: 'Market Pulse', icon: 'pi pi-bolt' },
+  { id: 'triggers', label: 'Trade Triggers', icon: 'pi pi-bell' },
   { id: 'tasks', label: 'Analysis Tasks', icon: 'pi pi-list' }
+
 ];
 
 onMounted(async () => {
@@ -161,7 +165,9 @@ const activeComponent = computed(() => {
     case 'timeline': return TimelineView;
     case 'search': return FilterView;
     case 'settings': return MarketPulseView;
+    case 'triggers': return TradeTriggersView;
     case 'stock-detail': return StockDetailView;
+
     default: return TimelineView;
   }
 });

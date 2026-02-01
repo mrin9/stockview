@@ -8,9 +8,6 @@ export async function GET({ url }: { url: URL }) {
     const resolution = url.searchParams.get('resolution');
     const limitParam = url.searchParams.get('limit');
     const fromParam = url.searchParams.get('from');
-
-    console.log('[stocks.json] Request params:', { symbol, resolution, limitParam, fromParam });
-
     try {
         const client = await clientPromise;
         const db = client.db(DB_NAME);
@@ -22,19 +19,13 @@ export async function GET({ url }: { url: URL }) {
         if (fromParam) {
             const fromDate = new Date(parseInt(fromParam));
             query.timestamp = { $gte: fromDate };
-            console.log('[stocks.json] Range query from:', fromDate.toISOString());
         } else {
             if (resolution) query.resolution = resolution;
             options.limit = parseInt(limitParam || '100');
         }
-
-        console.log('[stocks.json] Query:', JSON.stringify(query));
-
         const data = await collection
             .find(query, options)
             .toArray();
-
-        console.log('[stocks.json] Records found:', data.length);
 
         return new Response(JSON.stringify(data), {
             status: 200,
