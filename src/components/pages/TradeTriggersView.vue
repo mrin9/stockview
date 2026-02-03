@@ -61,40 +61,56 @@
     </Card>
 
     <!-- Create Modal -->
-    <Dialog v-model:visible="showCreateDialog" header="Create Trade Trigger" :style="{ width: '50vw' }" modal class="p-fluid bg-slate-900 border-slate-800">
+    <Dialog v-model:visible="showCreateDialog" header="Create Trade Trigger" :style="{ width: '650px' }" modal class="p-fluid bg-slate-900 border-slate-800">
       <div class="flex flex-col gap-6 p-1">
         
         <!-- Criteria Builder -->
         <div class="flex flex-col gap-3">
-          <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Criteria</label>
-          <div v-for="(item, index) in newTrigger.criteria" :key="index" class="flex flex-col bg-slate-800/40 p-3 rounded border border-slate-700/50 gap-2 relative group">
-            <Button icon="pi pi-times" @click="removeCriteria(newTrigger, index)" severity="secondary" text rounded size="small" class="absolute top-1 right-1" v-if="newTrigger.criteria.length > 1" />
-            <div class="flex gap-2 items-center">
-              <Select v-model="item.field" :options="fieldOptions" optionLabel="label" optionValue="value" placeholder="Field" size="small" class="flex-1"/>
-              <Select v-model="item.operator" :options="['==', '>', '<', '>=', '<=', 'contains']" placeholder="Op" size="small" class="w-24"/>
-              <InputText v-model="item.value" placeholder="Value" size="small" class="flex-1"/>
+          <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Trigger Logic Builder</label>
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-4 p-4 bg-slate-950/20 border border-slate-800 rounded-lg">
+            
+            <!-- Existing Logic Pills -->
+            <template v-for="(item, index) in newTrigger.criteria" :key="index">
+              <div v-if="index > 0" class="text-[10px] font-bold text-slate-600 uppercase px-1 font-mono">{{ newTrigger.criteria[index-1].joiner }}</div>
+              
+              <div class="relative bg-slate-800 border border-slate-700/50 rounded-md px-2.5 py-1.5 min-w-[80px] flex items-center justify-center group">
+                <span class="text-xs text-slate-300 font-mono">{{ getFieldLabel(item.field) }} {{ item.operator }} {{ item.value }}</span>
+                <button @click="removeCriteria(newTrigger, index)" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-[8px] border border-slate-900 hover:bg-red-600">
+                  <i class="pi pi-minus"></i>
+                </button>
+              </div>
+            </template>
+
+            <!-- Active Builder Box -->
+            <div class="flex flex-col gap-2 p-3 bg-slate-900 border border-dashed border-slate-700 rounded-md flex-1 min-w-[350px]">
+              <div class="flex gap-2 items-center">
+                <Select v-model="triggerBuilder.field" :options="fieldOptions" optionLabel="label" optionValue="value" placeholder="Field" size="small" class="flex-1 min-w-[120px]"/>
+                <Select v-model="triggerBuilder.operator" :options="['==', '>', '<', '>=', '<=', 'contains']" placeholder="Op" size="small" class="w-16"/>
+                <InputText v-model="triggerBuilder.value" placeholder="Value" size="small" class="flex-1 min-w-[80px]" @keyup.enter="commitTriggerBuilder(newTrigger)"/>
+                
+                <SelectButton v-model="triggerBuilder.joiner" :options="['AND', 'OR']" :allowEmpty="true" class="joiner-select-button" @change="commitTriggerBuilder(newTrigger)" />
+              </div>
             </div>
-            <div v-if="index === newTrigger.criteria.length - 1" class="flex justify-end gap-2 mt-1">
-              <Button label="+ AND" size="small" text @click="addCriteria(newTrigger, 'AND')" />
-              <Button label="+ OR" size="small" text @click="addCriteria(newTrigger, 'OR')" />
-            </div>
-            <div v-else class="text-xs text-orange-500 font-bold uppercase text-right">{{ item.joiner }}</div>
           </div>
         </div>
 
         <!-- Lifetime & Frequency -->
         <div class="grid grid-cols-2 gap-4">
-          <div class="flex flex-col gap-2">
-            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Trigger Lifetime</label>
-            <div class="flex gap-2">
-              <InputNumber v-model="newTrigger.lifetime.value" placeholder="Value" size="small" />
-              <Select v-model="newTrigger.lifetime.unit" :options="['HOURS', 'DAYS']" size="small" class="w-28" />
-            </div>
-          </div>
-          <div class="flex flex-col gap-2">
-            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Check Frequency (Mins)</label>
-            <InputNumber v-model="newTrigger.frequency" placeholder="E.g. 5" size="small" />
-          </div>
+          <InputGroup>
+            <IftaLabel>
+                <InputNumber id="create_frequency" v-model="newTrigger.frequency" placeholder="15" size="small" />
+                <label for="create_frequency">Check Frequency</label>
+            </IftaLabel>
+            <InputGroupAddon>Minutes</InputGroupAddon>
+          </InputGroup>
+
+          <InputGroup>
+            <IftaLabel>
+                <InputNumber id="create_lifetime" v-model="newTrigger.lifetime.value" placeholder="30" size="small" />
+                <label for="create_lifetime">Lifetime</label>
+            </IftaLabel>
+            <InputGroupAddon>Days</InputGroupAddon>
+          </InputGroup>
         </div>
       </div>
       <template #footer>
@@ -104,7 +120,7 @@
     </Dialog>
 
     <!-- Edit/View Drawer -->
-    <Drawer v-model:visible="showEditDrawer" position="right" :style="{ width: '400px' }" class="p-fluid bg-slate-900 border-l border-slate-800">
+    <Drawer v-model:visible="showEditDrawer" position="right" :style="{ width: '500px' }" class="p-fluid bg-slate-900 border-l border-slate-800">
       <template #header>
         <span class="text-lg font-bold text-white">Edit Trigger</span>
       </template>
@@ -113,33 +129,51 @@
         
         <!-- Criteria Builder (Edit Mode) -->
         <div class="flex flex-col gap-3">
-          <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Criteria</label>
-          <div v-for="(item, index) in selectedTrigger.criteria" :key="index" class="flex flex-col bg-slate-800/40 p-3 rounded border border-slate-700/50 gap-2 relative">
-            <Button icon="pi pi-times" @click="removeCriteria(selectedTrigger, index)" severity="secondary" text rounded size="small" class="absolute top-1 right-1" v-if="selectedTrigger.criteria.length > 1" />
-            <div class="flex gap-2 items-center">
-              <Select v-model="item.field" :options="fieldOptions" optionLabel="label" optionValue="value" placeholder="Field" size="small" class="flex-1"/>
-              <Select v-model="item.operator" :options="['==', '>', '<', '>=', '<=', 'contains']" placeholder="Op" size="small" class="w-16"/>
-              <InputText v-model="item.value" placeholder="Value" size="small" class="flex-1"/>
+          <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Trigger Logic Builder</label>
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-4 p-3 bg-slate-950/20 border border-slate-800 rounded-lg">
+            
+            <!-- Existing Logic Pills -->
+            <template v-for="(item, index) in selectedTrigger.criteria" :key="index">
+              <div v-if="index > 0" class="text-[10px] font-bold text-slate-600 uppercase px-1 font-mono">{{ selectedTrigger.criteria[index-1].joiner }}</div>
+              
+              <div class="relative bg-slate-800 border border-slate-700/50 rounded-md px-2.5 py-1.5 min-w-[80px] flex items-center justify-center group">
+                <span class="text-xs text-slate-300 font-mono">{{ getFieldLabel(item.field) }} {{ item.operator }} {{ item.value }}</span>
+                <button @click="removeCriteria(selectedTrigger, index)" class="absolute -top-1.5 -right-1.5 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-white text-[8px] border border-slate-900 hover:bg-red-600">
+                  <i class="pi pi-minus"></i>
+                </button>
+              </div>
+            </template>
+
+            <!-- Active Builder Box -->
+            <div class="flex flex-col gap-2 p-3 bg-slate-900 border border-dashed border-slate-700 rounded-md flex-1 min-w-[350px]">
+              <div class="flex gap-2 items-center">
+                <Select v-model="triggerBuilder.field" :options="fieldOptions" optionLabel="label" optionValue="value" placeholder="Field" size="small" class="flex-1 min-w-[120px]"/>
+                <Select v-model="triggerBuilder.operator" :options="['==', '>', '<', '>=', '<=', 'contains']" placeholder="Op" size="small" class="w-16"/>
+                <InputText v-model="triggerBuilder.value" placeholder="Value" size="small" class="flex-1 min-w-[80px]" @keyup.enter="commitTriggerBuilder(selectedTrigger)"/>
+                
+                <SelectButton v-model="triggerBuilder.joiner" :options="['AND', 'OR']" :allowEmpty="true" class="joiner-select-button" @change="commitTriggerBuilder(selectedTrigger)" />
+              </div>
             </div>
-            <div v-if="index === selectedTrigger.criteria.length - 1" class="flex justify-end gap-2 mt-1">
-              <Button label="+ AND" size="small" text @click="addCriteria(selectedTrigger, 'AND')" />
-              <Button label="+ OR" size="small" text @click="addCriteria(selectedTrigger, 'OR')" />
-            </div>
-            <div v-else class="text-xs text-orange-500 font-bold uppercase text-right">{{ item.joiner }}</div>
           </div>
         </div>
 
         <!-- Configuration -->
-        <div class="flex flex-col gap-2">
-            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Trigger Lifetime</label>
-            <div class="flex gap-2">
-              <InputNumber v-model="selectedTrigger.lifetime.value" size="small" />
-              <Select v-model="selectedTrigger.lifetime.unit" :options="['HOURS', 'DAYS']" size="small" class="w-28" />
-            </div>
-        </div>
-        <div class="flex flex-col gap-2">
-            <label class="text-xs font-bold text-slate-400 uppercase tracking-wider">Check Frequency (Mins)</label>
-            <InputNumber v-model="selectedTrigger.frequency" size="small" />
+        <div class="flex flex-col gap-4">
+           <InputGroup>
+            <IftaLabel>
+                <InputNumber id="edit_frequency" v-model="selectedTrigger.frequency" placeholder="15" size="small" />
+                <label for="edit_frequency">Check Frequency</label>
+            </IftaLabel>
+            <InputGroupAddon>Minutes</InputGroupAddon>
+          </InputGroup>
+
+          <InputGroup>
+            <IftaLabel>
+                <InputNumber id="edit_lifetime" v-model="selectedTrigger.lifetime.value" placeholder="30" size="small" />
+                <label for="edit_lifetime">Lifetime</label>
+            </IftaLabel>
+            <InputGroupAddon>Days</InputGroupAddon>
+          </InputGroup>
         </div>
 
         <div class="mt-8 flex gap-2">
@@ -148,6 +182,7 @@
         </div>
       </div>
     </Drawer>
+
 
   </div>
 </template>
@@ -164,9 +199,14 @@ import Dialog from 'primevue/dialog';
 import Drawer from 'primevue/drawer';
 import ConfirmDialog from 'primevue/confirmdialog';
 import InputNumber from 'primevue/inputnumber';
+import InputGroup from 'primevue/inputgroup';
+import InputGroupAddon from 'primevue/inputgroupaddon';
+import IftaLabel from 'primevue/iftalabel';
+import SelectButton from 'primevue/selectbutton';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
+
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -177,11 +217,15 @@ const showCreateDialog = ref(false);
 const showEditDrawer = ref(false);
 const selectedTrigger = ref(null);
 
-const newTrigger = ref({
-  criteria: [{ field: 'symbol', operator: '==', value: '', joiner: 'AND' }],
-  lifetime: { value: 15, unit: 'DAYS' },
-  frequency: 5
+const triggerBuilder = ref({ field: 'rsi', operator: '>', value: '', joiner: null });
+
+const getInitialTrigger = () => ({
+  criteria: [],
+  lifetime: { value: 30, unit: 'DAYS' },
+  frequency: 15
 });
+
+const newTrigger = ref(getInitialTrigger());
 
 const fieldOptions = [
   { label: 'Symbol', value: 'symbol' },
@@ -190,6 +234,11 @@ const fieldOptions = [
   { label: 'Close Price', value: 'close' },
   { label: 'Volume', value: 'volume' }
 ];
+
+const getFieldLabel = (val) => {
+    const opt = fieldOptions.find(o => o.value === val);
+    return opt ? opt.label : val;
+};
 
 const loadTriggers = async () => {
   loading.value = true;
@@ -203,10 +252,14 @@ const loadTriggers = async () => {
   }
 };
 
-const addCriteria = (target, joiner) => {
-  const last = target.criteria[target.criteria.length - 1];
-  last.joiner = joiner;
-  target.criteria.push({ field: 'rsi', operator: '>', value: '', joiner: 'AND' });
+const commitTriggerBuilder = (target) => {
+  if (!triggerBuilder.value.value || !triggerBuilder.value.joiner) {
+    return;
+  }
+  target.criteria.push({ ...triggerBuilder.value });
+  // Reset for next
+  triggerBuilder.value.value = '';
+  triggerBuilder.value.joiner = null; 
 };
 
 const removeCriteria = (target, index) => {
@@ -214,6 +267,15 @@ const removeCriteria = (target, index) => {
 };
 
 const saveNewTrigger = async () => {
+  if (triggerBuilder.value.value) {
+      commitTriggerBuilder(newTrigger.value);
+  }
+  
+  if (newTrigger.value.criteria.length === 0) {
+      toast.add({ severity: 'warn', summary: 'No Logic', detail: 'Add at least one criteria' });
+      return;
+  }
+
   try {
     const res = await fetch('/api/triggers.json', {
       method: 'POST',
@@ -223,12 +285,7 @@ const saveNewTrigger = async () => {
     if (res.ok) {
       toast.add({ severity: 'success', summary: 'Success', detail: 'Trigger created' });
       showCreateDialog.value = false;
-      // Reset form
-      newTrigger.value = {
-        criteria: [{ field: 'symbol', operator: '==', value: '', joiner: 'AND' }],
-        lifetime: { value: 15, unit: 'DAYS' },
-        frequency: 5
-      };
+      newTrigger.value = getInitialTrigger();
       await loadTriggers();
     }
   } catch (err) {
@@ -283,5 +340,13 @@ onMounted(loadTriggers);
 <style scoped>
 :deep(.p-datatable) {
   --p-datatable-header-background: transparent;
+}
+:deep(.joiner-select-button .p-button) {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+:deep(.joiner-select-button) {
+    display: inline-flex;
 }
 </style>

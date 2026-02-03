@@ -7,50 +7,56 @@
     </div>
 
     <Card class="bg-slate-900 border-slate-800 shadow-xl">
+      <template #title>
+        <div class="text-sm font-semibold text-slate-400 uppercase tracking-wider pb-2 border-b border-slate-800">Filter Builder</div>
+      </template>
       <template #content>
-        <div class="flex flex-col gap-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div v-for="(item, index) in criteria" :key="index" class="flex flex-col bg-slate-800/40 rounded-sm border border-slate-700/50 hover:border-orange-500/30 transition-colors relative group">
-              
-              <!-- Remove Button (Top Right) -->
-              <Button icon="pi pi-times" 
-                      @click="removeCriteria(index)" 
-                      severity="secondary" 
-                      text 
-                      rounded
-                      size="small" 
-                      class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      v-if="criteria.length > 1" />
+        <div class="flex flex-col gap-6 pt-2">
+          <!-- Criteria Flow (Chips) -->
+          <div class="flex flex-wrap items-center gap-x-4 gap-y-6">
+            <template v-for="(item, index) in criteria" :key="index">
+              <!-- Joiner Text (Except before first item) -->
+              <div v-if="index > 0" class="text-xs font-bold text-slate-500 uppercase tracking-widest px-1">
+                {{ criteria[index - 1].joiner }}
+              </div>
 
-              <div class="p-3 flex flex-col gap-2">
-                 <!-- Inputs Row -->
-                 <div class="flex gap-1 items-center pr-4">
-                   <Select v-model="item.field" :options="fieldOptions" optionLabel="label" optionValue="value" placeholder="Field" @keyup.enter="search" size="small"/>
-                   <Select v-model="item.operator" :options="['==', '>', '<', '>=', '<=', 'contains']" placeholder="Op"  @keyup.enter="search" size="small"/>
-                   <InputText v-model="item.value" placeholder="Value" class="flex-1 min-w-[90px]" @keyup.enter="search" size="small"/>
-                 </div>
+              <!-- Filter Chip -->
+              <div class="relative bg-slate-800/60 border border-slate-700/50 rounded-lg px-6 py-4 min-w-[180px] flex items-center justify-center hover:border-slate-500 transition-colors group">
+                <div class="text-sm text-slate-200 font-medium">
+                  {{ getFieldLabel(item.field) }} {{ item.operator }} {{ item.value }}
+                </div>
+                <!-- Remove Button (Top Right) -->
+                <button @click="removeCriteria(index)" class="absolute -top-2.5 -right-2.5 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white border-2 border-slate-900 hover:bg-red-600 shadow-lg transition-transform hover:scale-110">
+                  <i class="pi pi-minus text-[10px] font-bold"></i>
+                </button>
+              </div>
+            </template>
 
-                 <!-- Action Row (SplitButton or Joiner Label) -->
-                 <div class="flex justify-end items-center h-7">
-                    <!-- If this is the LAST item, show SplitButton to ADD next -->
-                    <div v-if="index === criteria.length - 1" class="flex gap-1.5">
-                        <Button label="Clear" icon="pi pi-filter-slash" @click="clear" severity="secondary" text size="small" />
-                        <Button label="Search" icon="pi pi-search" @click="search" :loading="loading" size="small" raised />
-                        <SplitButton label="AND" :model="getSplitItems(index)" @click="addCriteria('AND')" size="small" severity="secondary" outlined class="ml-2" />
-                    </div>
-                    
-                    <!-- If NOT the last item, show the joiner (AND/OR) that connects to the NEXT item -->
-                    <div v-else class="flex items-center gap-1.5">
-                         <span class="text-xs text-slate-500 font-bold uppercase tracking-widest">{{ item.joiner }}</span>
-                         <div class="h-[1px] w-12 bg-slate-700"></div>
-                    </div>
-                 </div>
+            <!-- Active Builder Area -->
+            <div class="flex flex-col gap-3 p-4 bg-slate-950/40 border border-dashed border-slate-800 rounded-lg min-w-[400px]">
+              <div class="flex gap-2 items-center">
+                <Select v-model="builder.field" :options="fieldOptions" optionLabel="label" optionValue="value" placeholder="Field" size="small" class="flex-1"/>
+                <Select v-model="builder.operator" :options="['==', '>', '<', '>=', '<=', 'contains']" placeholder="Op" size="small" class="w-20"/>
+                <InputText v-model="builder.value" placeholder="Value" size="small" class="flex-1" @keyup.enter="commitBuilder('AND')"/>
+                
+                <!-- AND/OR Toggle Buttons -->
+                <div class="flex border border-slate-700 rounded-md overflow-hidden bg-slate-900 ml-1">
+                  <button @click="commitBuilder('AND')" class="px-3 py-1.5 text-[10px] font-bold tracking-wider hover:bg-slate-800 border-r border-slate-700 text-slate-400 hover:text-white transition-colors">AND</button>
+                  <button @click="commitBuilder('OR')" class="px-3 py-1.5 text-[10px] font-bold tracking-wider hover:bg-slate-800 text-slate-400 hover:text-white transition-colors">OR</button>
+                </div>
               </div>
             </div>
+          </div>
+
+          <!-- Bottom Action Row -->
+          <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-800/50">
+            <Button label="Clear All" icon="pi pi-filter-slash" @click="clear" severity="secondary" text size="small" />
+            <Button label="Search Stocks" icon="pi pi-search" @click="search" :loading="loading" size="small" raised />
           </div>
         </div>
       </template>
     </Card>
+
 
     <Card v-if="results.length > 0" class="bg-slate-900 border-slate-800 shadow-xl overflow-hidden">
       <template #title><span class="text-white">Results ({{ results.length }})</span></template>
@@ -104,9 +110,8 @@ const loading = ref(false);
 const searched = ref(false);
 const results = ref([]);
 
-const criteria = ref([
-  { field: 'symbol', operator: '==', value: '', joiner: 'AND' }
-]);
+const criteria = ref([]);
+const builder = ref({ field: 'close', operator: '>', value: '', joiner: 'AND' });
 
 const fieldOptions = [
   { label: 'Symbol', value: 'symbol' },
@@ -147,25 +152,19 @@ const fieldOptions = [
   { label: 'WMA', value: 'wma' }
 ];
 
-const getSplitItems = (index) => [
-    {
-        label: 'OR',
-        command: () => {
-             addCriteria('OR');
-        }
-    }
-];
+const getFieldLabel = (val) => {
+    const opt = fieldOptions.find(o => o.value === val);
+    return opt ? opt.label : val;
+};
 
-const addCriteria = (joiner = 'AND') => {
-  if (criteria.value.length < 5) {
-    // Set the joiner of the CURRENT last item
-    const lastIdx = criteria.value.length - 1;
-    if (lastIdx >= 0) {
-        criteria.value[lastIdx].joiner = joiner;
+const commitBuilder = (joiner) => {
+    if (!builder.value.value) {
+        toast.add({ severity: 'warn', summary: 'Missing Value', detail: 'Please enter a value for the filter', life: 2000 });
+        return;
     }
-    // Add new blank item
-    criteria.value.push({ field: 'close', operator: '>', value: '', joiner: 'AND' });
-  }
+    criteria.value.push({ ...builder.value, joiner });
+    // Keep the field but clear the value
+    builder.value.value = '';
 };
 
 const removeCriteria = (index) => {
@@ -173,7 +172,8 @@ const removeCriteria = (index) => {
 };
 
 const clear = () => {
-  criteria.value = [{ field: 'symbol', operator: '==', value: '', joiner: 'AND' }];
+  criteria.value = [];
+  builder.value = { field: 'close', operator: '>', value: '', joiner: 'AND' };
   results.value = [];
   searched.value = false;
 };
@@ -181,11 +181,12 @@ const clear = () => {
 const error = ref(null);
 
 const validate = () => {
-    for (const c of criteria.value) {
-        if (c.field === 'symbol' && c.value.length > 0 && c.value.length < 2) {
-             toast.add({ severity: 'warn', summary: 'Invalid Input', detail: 'Symbol search must have at least 2 characters', life: 3000 });
-             return false;
-        }
+    if (criteria.value.length === 0 && builder.value.value) {
+        commitBuilder('AND');
+    }
+    if (criteria.value.length === 0) {
+        toast.add({ severity: 'warn', summary: 'Empty Filter', detail: 'Add at least one criteria to search', life: 3000 });
+        return false;
     }
     return true;
 };
