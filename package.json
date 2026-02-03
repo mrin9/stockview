@@ -31,5 +31,8 @@
     "vue-chartjs": "^5.3.3",
     "vue-router": "^5.0.0",
     "vue3-apexcharts": "^1.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.0"
   }
 }

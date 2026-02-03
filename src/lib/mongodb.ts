@@ -1,9 +1,9 @@
 import { MongoClient } from 'mongodb';
 
-const uri = import.meta.env.MONGODB_URI;
+const uri = import.meta.env.MONGODB_URI || process.env.MONGODB_URI;
 
 if (!uri) {
-    throw new Error('Please define the MONGODB_URI environment variable inside .env');
+    throw new Error('Please define the MONGODB_URI environment variable (via .env or docker -e)');
 }
 
 let client: MongoClient;
